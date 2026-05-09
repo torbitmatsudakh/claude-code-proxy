@@ -71,68 +71,83 @@ ended up forking it and applying some patches, but would much rather not do it.
 
 ## Quick start
 
-### 1. Install
+> **For this fork** — runs from source via Bun, includes the Anthropic
+> provider and `claude-gpt` wrapper. If you only need raine's Codex/Kimi
+> providers with a prebuilt binary, see
+> [upstream](https://github.com/raine/claude-code-proxy).
 
-**Homebrew** (macOS and Linux):
+### 1. Prerequisites & install
+
+- macOS or Linux
+- [Bun](https://bun.sh) — `curl -fsSL https://bun.sh/install | bash`
+- [Claude Code](https://www.anthropic.com/claude-code) installed and signed
+  in at least once (the Anthropic provider reads your Claude Pro OAuth
+  token from the keychain that Claude Code populates — no extra setup
+  needed)
 
 ```sh
-brew install raine/claude-code-proxy/claude-code-proxy
+git clone https://github.com/torbitmatsudakh/claude-code-proxy
+cd claude-code-proxy
+bun install
 ```
 
-**Install script** (macOS and Linux):
+### 2. (Optional) Authenticate ChatGPT or Kimi
+
+The Anthropic provider works automatically once Claude Code is signed in.
+Only run the steps below for the **other** providers you actually want.
+
+**Codex (ChatGPT Plus/Pro)** — sign in with your **ChatGPT account**, not
+an OpenAI API key:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/raine/claude-code-proxy/main/scripts/install.sh | bash
-```
-
-**Manual:** download a prebuilt binary for your platform from the
-[releases page](https://github.com/raine/claude-code-proxy/releases).
-
-### 2. Pick a provider and authenticate
-
-The proxy supports two upstream providers. Pick one and run its login flow; the
-proxy will refuse to start traffic until a token is stored.
-
-**Codex (ChatGPT Plus/Pro):**
-
-```sh
-claude-code-proxy codex auth login     # browser OAuth (PKCE)
+bun src/cli.ts codex auth login     # browser OAuth (PKCE)
 # or, on a headless machine:
-claude-code-proxy codex auth device    # device-code flow
+bun src/cli.ts codex auth device    # device-code flow
 ```
-
-Sign in with your **ChatGPT Plus/Pro account**, not an OpenAI API account.
 
 **Kimi (kimi.com Kimi Code):**
 
 ```sh
-claude-code-proxy kimi auth login      # device-code flow (prints URL + code)
+bun src/cli.ts kimi auth login      # device-code flow (prints URL + code)
 ```
 
-Sign in with your **kimi.com account**. The verification URL is displayed; open
-it in any browser, confirm the code, and the CLI polls until done.
-
-On macOS credentials go to Keychain; on other platforms they are written to
-`~/.config/claude-code-proxy/<provider>/auth.json` (mode 0600).
+On macOS credentials go to Keychain; on other platforms they are written
+to `~/.config/claude-code-proxy/<provider>/auth.json` (mode 0600).
 
 Verify:
 
 ```sh
-claude-code-proxy codex auth status
-claude-code-proxy kimi auth status
+bun src/cli.ts codex auth status
+bun src/cli.ts kimi auth status
+# (Anthropic uses Claude Code's own keychain entry — no separate command)
 ```
 
-### 3. Start the proxy
+### 3. Install the `claude-gpt` wrapper and launch
 
 ```sh
-claude-code-proxy serve                # listens on 127.0.0.1:18765
-PORT=11435 claude-code-proxy serve     # change the listen port
+mkdir -p ~/.local/bin
+ln -sf "$(pwd)/scripts/claude-gpt" ~/.local/bin/claude-gpt
+# Make sure ~/.local/bin is on PATH (add to ~/.zshrc if needed):
+#   export PATH="$HOME/.local/bin:$PATH"
+
+claude-gpt           # ChatGPT Pro default; /model picker also shows Claude family
+claude-gpt claude    # Claude Pro default (claude-opus-4-7)
+claude-gpt kimi      # Kimi default
 ```
 
-Binds to `127.0.0.1` only. One `serve` process handles all providers — the
-upstream for each request is chosen from `ANTHROPIC_MODEL`.
+The wrapper auto-starts the proxy in the background on port 18765. Inside
+Claude Code, type `/model` to switch between providers mid-session —
+`gpt-5.5`, `claude-opus-4-7`, `kimi-for-coding` all live in the same
+picker.
 
-### 4. Point Claude Code at it
+To check / stop the background proxy:
+
+```sh
+claude-gpt status
+claude-gpt stop
+```
+
+### 4. Manual launch (without the wrapper)
 
 `ANTHROPIC_MODEL` selects the provider:
 
