@@ -1,14 +1,59 @@
 # claude-code-proxy
 
+> **Fork notice:** This is a fork of
+> [raine/claude-code-proxy](https://github.com/raine/claude-code-proxy) that
+> adds a **native Anthropic provider** and a **`claude-gpt` wrapper** so you
+> can route between ChatGPT Pro, Claude Pro, and Kimi inside a *single*
+> Claude Code session via `/model`. See
+> [Fork additions](#fork-additions) below.
+
 `claude-code-proxy` lets you use
 [Claude Code](https://www.anthropic.com/claude-code) with your **ChatGPT
 Plus/Pro** subscription or your **Kimi Code** (kimi.com) account.
 
 <img src="meta/claude-code-screenshot.webp" alt="Claude Code running through claude-code-proxy" width="630" />
 
-[Quick start](#quick-start) · [Providers](#providers) ·
-[How it works](#how-it-works) · [Configuration](#configuration) ·
-[Limitations](#limitations)
+[Fork additions](#fork-additions) · [Quick start](#quick-start) ·
+[Providers](#providers) · [How it works](#how-it-works) ·
+[Configuration](#configuration) · [Limitations](#limitations)
+
+## Fork additions
+
+This fork adds two things on top of upstream:
+
+### 1. Native Anthropic provider (`src/providers/anthropic/`)
+
+Routes `claude-*` model requests directly to `api.anthropic.com` using the
+Claude Pro OAuth token that Claude Code already stores in the macOS keychain.
+Supports the full Claude 4 family **including legacy names** Claude Code may
+still emit:
+
+- `claude-opus-4-7`, `claude-opus-4-6`
+- `claude-sonnet-4-6`, `claude-sonnet-4-5`
+- `claude-haiku-4-5`, `claude-haiku-4-5-20251001`, `claude-haiku-4-4`
+
+This means a single proxy instance can serve `gpt-5.5` (codex) and
+`claude-opus-4-7` (anthropic) requests in the same Claude Code session — pick
+the right model for each task without restarting.
+
+### 2. `scripts/claude-gpt` wrapper
+
+A bash wrapper that auto-starts the proxy, sets Claude Code env vars, and
+uses the (undocumented) `ANTHROPIC_CUSTOM_MODEL_OPTION_*` variables so the
+`/model` picker shows your alternate provider model **alongside** the Claude
+family.
+
+```sh
+claude-gpt           # default: ChatGPT Pro (gpt-5.5), /model picker also shows Claude family
+claude-gpt claude    # default: Claude Pro  (claude-opus-4-7)
+claude-gpt kimi      # default: Kimi        (kimi-for-coding)
+claude-gpt status    # show whether the background proxy is running
+claude-gpt stop      # stop the background proxy
+```
+
+After launch, type `/model` inside Claude Code and pick from any provider —
+the proxy reads the model name out of the request body and routes
+accordingly.
 
 ## Why?
 
