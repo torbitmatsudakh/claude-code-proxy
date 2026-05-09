@@ -41,7 +41,10 @@ the right model for each task without restarting.
 A bash wrapper that auto-starts the proxy, sets Claude Code env vars, and
 uses the (undocumented) `ANTHROPIC_CUSTOM_MODEL_OPTION_*` variables so the
 `/model` picker shows your alternate provider model **alongside** the Claude
-family.
+family — meaning you can switch between ChatGPT, Claude, and Kimi inside a
+single session without restarting:
+
+<img src="meta/model-picker-cross-provider.png" alt="Claude Code /model picker showing gpt-5.5 alongside the Claude family" width="720" />
 
 ```sh
 claude-gpt           # default: ChatGPT Pro (gpt-5.5), /model picker also shows Claude family
